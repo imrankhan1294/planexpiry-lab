@@ -1,0 +1,40 @@
+{
+  "fixed_order": [
+    "permission_current",
+    "prefer_original_route",
+    "original_fare_ok",
+    "original_slot_available",
+    "alternate_slot_available",
+    "alternate_fare_ok"
+  ],
+  "adaptive_first": "prefer_original_route",
+  "training_fixed": {
+    "resolved": "73/100",
+    "allow": "5103/10000",
+    "deny": "2197/10000",
+    "hold": "27/100",
+    "units": "2237/500"
+  },
+  "training_adaptive": {
+    "resolved": "1",
+    "allow": "5751/10000",
+    "deny": "4249/10000",
+    "hold": "0",
+    "units": "1049/250"
+  },
+  "validation_fixed": {
+    "resolved": "11/25",
+    "allow": "42/625",
+    "deny": "233/625",
+    "hold": "14/25",
+    "units": "507/125"
+  },
+  "validation_adaptive": {
+    "resolved": "1",
+    "allow": "21/50",
+    "deny": "29/50",
+    "hold": "0",
+    "units": "3997/1000"
+  },
+  "budget": 5
+}
