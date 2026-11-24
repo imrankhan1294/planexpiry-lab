@@ -30,6 +30,12 @@ Two schedules use **the same policy, facts, observations and hard budget**. The 
 
 At five units the adaptive schedule can check only the relevant route and still fit the entire required branch. That budget fits by construction in this example. At tighter budgets the trained planner can recheck the wrong thing first under shift, and the fixed order can win. A resolved result includes both **ALLOW** and **DENY**; neither method is credited for guessing.
 
+## Final write boundary experiment
+
+A separate [mock booking experiment](final-write.cjs) asks what happens when a record changes after the last read. Run `node final-write.cjs` for the breakdown and `node final-write.cjs --self-test` for the trace oracle, replay checks, and ordered two-event cases.
+
+In eight deliberately chosen synthetic cases, the global-revision policy committed once and the dependency-scoped policy twice. The extra commit was the case in which someone edited an unrelated record. Neither wrote on stale evidence. A no-write client shadow would have allowed four stale decisions, including a slot that closed and reopened with a new revision. Those are fixture counts, not estimates of reliability or production traffic. Both write policies assume the same authoritative service can atomically validate the slot and approval and persist the receipt alongside the effect.
+
 ## Where the guarantees stop
 
 - **Planning:** Exact dynamic programming maximizes expected resolution, then minimizes expected verification cost under the supplied priors. Those weights affect the order only.
