@@ -36,6 +36,21 @@ A separate [mock booking experiment](final-write.cjs) asks what happens when a r
 
 In eight deliberately chosen synthetic cases, the global-revision policy committed once and the dependency-scoped policy twice. The extra commit was the case in which someone edited an unrelated record. Neither wrote on stale evidence. A no-write client shadow would have allowed four stale decisions, including a slot that closed and reopened with a new revision. Those are fixture counts, not estimates of reliability or production traffic. Both write policies assume the same authoritative service can atomically validate the slot and approval and persist the receipt alongside the effect.
 
+## When both evidence sources go down together
+
+Run `node evidence-outages.cjs` (Node 18+, no dependencies). The fictional agent can proceed only if current approval and capacity are both true. The two cheapest paths per fact may share an outage. An alternate costs two check units instead of one. All policies have the same five-unit budget and the same decision rule: unavailable evidence never counts as a denial or an approval.
+
+| Evaluation scenario | Fixed, independent | Fixed, dependency-aware | Adaptive, independent | Adaptive, dependency-aware |
+| --- | ---: | ---: | ---: | ---: |
+| Independent cheap paths | 93.70% | 92.14% | **97.28%** | 90.71% |
+| Held out: cheap paths commonly share outages | 80.68% | 83.27% | 80.86% | **91.44%** |
+| Held out: nominal fallback often shares the outage too | 80.68% | 80.54% | 80.81% | **81.70%** |
+| Held out: common cheap-path outages and more denials | 80.74% | 85.33% | 80.89% | **92.71%** |
+
+Entries are exact weighted ALLOW + DENY rates, rounded for display. The fixed policies search all 720 endpoint orders per training model; adaptive policies search feasible observation-dependent choices, maximizing resolution first and minimizing expected cost on ties. Cheap paths have 80% marginal availability and alternates 70% in all scenarios. The dependency-aware planner trains on a mixture with an 85% chance of a shared cheap-path regime; held-out outage scenarios use 95%. In the fallback-coupled scenario, 85% of worlds also tie alternates to the primary failure domain. The dependency-aware policy spends 2.393 check units on average in the common-outage scenario, versus 2.242 for the independence-trained adaptive policy. It also loses on independent paths. Circuit breakers, real latency, contradictory evidence and final-write consistency are outside this model. The code checks all 256 truth/availability combinations for conclusive correctness and budget compliance.
+
+Related work: [When to Hedge in Interactive Services](https://www.usenix.org/conference/nsdi21/presentation/primorac) studies when redundant requests help or hurt latency. This lab instead measures evidence resolution under an explicit check budget, using synthetic truth and outages.
+
 ## Where the guarantees stop
 
 - **Planning:** Exact dynamic programming maximizes expected resolution, then minimizes expected verification cost under the supplied priors. Those weights affect the order only.
