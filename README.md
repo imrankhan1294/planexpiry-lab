@@ -51,6 +51,21 @@ Entries are exact weighted ALLOW + DENY rates, rounded for display. The fixed po
 
 Related work: [When to Hedge in Interactive Services](https://www.usenix.org/conference/nsdi21/presentation/primorac) studies when redundant requests help or hurt latency. This lab instead measures evidence resolution under an explicit check budget, using synthetic truth and outages.
 
+## What survives a lost acknowledgment?
+
+Run `python3 -B durable-intent.py` on POSIX (Python 3.10+, standard library). Every first attempt and replay runs in a separate process. The harness kills the first worker at a selected SQLite transaction boundary and counts durable mock effects and receipts after restart.
+
+| First attempt | Fresh token on replay | Persisted token + atomic receipt | Persisted token + split receipt |
+| --- | ---: | ---: | ---: |
+| Acknowledged; deliberate replay | 2 | 1 | 1 |
+| Killed before effect commit | 1 | 1 | 1 |
+| Killed just after effect commit | 2 | 1 | 2 |
+| Killed after receipt commit | 2 | 1 | 1 |
+
+Cells count effects, not requests. In the split-receipt failure there are **two effects and only one receipt**: the first effect committed without its receipt, and recovery ran it again despite reusing the token. With atomic receipts, replay returns the original effect ID when the effect already committed; reusing the token with a different payload returns a conflict. The fresh-token baseline models an agent that regenerates the token after restart, not what a properly idempotent client would do.
+
+These are 12 selected synthetic fixtures, not an estimate of failure rates. The caller assumes the same upstream task ID is recovered and the provider owns the effect and receipt in one durable transaction. The demo does not cover power loss, an external provider without idempotency, or unknown remote status. When a provider cannot prove the outcome, the safe response is to hold for reconciliation, not issue a new token. Related prior art: [AWS Builders’ Library on safe retries](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
+
 ## Where the guarantees stop
 
 - **Planning:** Exact dynamic programming maximizes expected resolution, then minimizes expected verification cost under the supplied priors. Those weights affect the order only.
